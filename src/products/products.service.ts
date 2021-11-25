@@ -1,5 +1,5 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ProductDto } from './dto/create-product.dto';
 import { Product } from './interfaces/product.interface';
 
 @Injectable()
@@ -42,16 +42,16 @@ export class ProductsService {
       return product;
     }
 
-    throw new HttpException('product not found', HttpStatus.NOT_FOUND);
+    throw new NotFoundException();
   }
 
-  update(id: number, updateProductDto: CreateProductDto) {
+  update(id: number, updateProductDto: ProductDto) {
     const productIndex = this.products.findIndex((post) => post.id === id);
     if (productIndex > -1) {
       this.products[productIndex] = { id: Number(id), ...updateProductDto };
       return { id: Number(id), ...updateProductDto };
     }
-    throw new HttpException('product not found', HttpStatus.NOT_FOUND);
+    throw new NotFoundException();
   }
 
   delete(id: number) {
@@ -59,7 +59,7 @@ export class ProductsService {
     if (productIndex > -1) {
       this.products.splice(productIndex, 1);
     } else {
-      throw new HttpException('product not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException();
     }
   }
 }
