@@ -1,65 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { Repository } from 'typeorm';
 import { ProductDto } from './dto/create-product.dto';
 import { Product } from './interfaces/product.interface';
+import { Product as ProductEntity } from './products.entity';
 
 @Injectable()
 export class ProductsService {
-  private readonly products: Product[] = [
-    {
-      id: 0,
-      title: 'iphone 13 pro',
-      description: 'new iphone for 500k tenge',
-      mainImage: 'some url for image of product',
-      color: 'gray',
-      price: 500000,
-    },
-    {
-      id: 1,
-      title: 'iphone 12 pro',
-      description: 'new iphone for 450k tenge',
-      mainImage: 'some url for image of product',
-      color: 'blue',
-      price: 450000,
-    },
-  ];
+  constructor(
+    @InjectRepository(ProductEntity)
+    private productsRepository: Repository<ProductEntity>,
+  ) {}
 
-  create(product: Product) {
-    const newProduct = {
-      id: Math.floor(Math.random() * 100) + 1,
-      ...product,
-    };
-    this.products.push(newProduct);
-    return newProduct;
+  async create(createProductDto: ProductDto) {
+    const data = instanceToPlain(createProductDto);
+    // remove data
+    return await this.productsRepository.save(
+      plainToInstance(ProductEntity, data),
+    );
   }
 
-  findAll(): Product[] {
-    return this.products;
+  async findAll(): Promise<Product[]> {
+    return await this.productsRepository.find();
   }
 
-  findOne(id: number) {
-    const product = this.products.find((post) => post.id === id);
-    if (product) {
-      return product;
-    }
-
-    throw new NotFoundException();
-  }
-
-  update(id: number, updateProductDto: ProductDto) {
-    const productIndex = this.products.findIndex((post) => post.id === id);
-    if (productIndex > -1) {
-      this.products[productIndex] = { id: Number(id), ...updateProductDto };
-      return { id: Number(id), ...updateProductDto };
+  async findOne(id: number): Promise<Product> {
+    const foundProduct = await this.productsRepository.findOne({
+      where: { id },
+    });
+    if (foundProduct) {
+      return foundProduct;
     }
     throw new NotFoundException();
   }
 
-  delete(id: number) {
-    const productIndex = this.products.findIndex((post) => post.id === id);
-    if (productIndex > -1) {
-      this.products.splice(productIndex, 1);
-    } else {
-      throw new NotFoundException();
-    }
+  async update(id: number, updateProductDto: ProductDto) {
+    const updateProduct = await this.findOne(id);
+    updateProduct.title = updateProductDto.title;
+    updateProduct.description = updateProductDto.description;
+    updateProduct.color = updateProductDto.color;
+    updateProduct.mainImage = updateProductDto.mainImage;
+    updateProduct.price = updateProductDto.price;
+    return await this.productsRepository.save(updateProduct);
+  }
+
+  async delete(id: number): Promise<void> {
+    const deleteProduct = await this.findOne(id);
+    await this.productsRepository.delete(deleteProduct);
   }
 }

@@ -23,7 +23,7 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(): Product[] {
+  findAll(): Promise<Product[]> {
     return this.productsService.findAll();
   }
 

@@ -1,6 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
+import { Product } from '../products.entity';
 
-export class ProductDto {
+export class ProductDto implements Readonly<ProductDto> {
   @IsNotEmpty()
   title: string;
 
