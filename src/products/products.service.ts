@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { plainToInstance, plainToClassFromExist } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { ProductDto } from './dto/create-product.dto';
 import { Product } from './interfaces/product.interface';
@@ -14,10 +14,8 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: ProductDto) {
-    const data = instanceToPlain(createProductDto);
-    // remove data
     return await this.productsRepository.save(
-      plainToInstance(ProductEntity, data),
+      plainToInstance(ProductEntity, createProductDto),
     );
   }
 
@@ -37,12 +35,14 @@ export class ProductsService {
 
   async update(id: number, updateProductDto: ProductDto) {
     const updateProduct = await this.findOne(id);
-    updateProduct.title = updateProductDto.title;
-    updateProduct.description = updateProductDto.description;
-    updateProduct.color = updateProductDto.color;
-    updateProduct.mainImage = updateProductDto.mainImage;
-    updateProduct.price = updateProductDto.price;
-    return await this.productsRepository.save(updateProduct);
+    const dto = {
+      id,
+      ...updateProductDto,
+    };
+
+    return await this.productsRepository.save(
+      plainToClassFromExist(updateProduct, dto),
+    );
   }
 
   async delete(id: number): Promise<void> {
